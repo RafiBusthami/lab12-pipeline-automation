@@ -80,3 +80,17 @@ models:
         tests: [not_null]
       - name: growth_pct
         description: "(revenue - previous month) / previous month * 100, rounded to 2 decimals"
+
+  - name: mart_top_customers
+    description: "E4 - Customers ranked by total spending (spending_rank 1 = highest). Filter spending_rank <= N for a top-N list."
+    columns:
+      - name: spending_rank
+        tests: [not_null]
+      - name: customer_id
+        tests:
+          - unique
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_customer'), field: customer_id}
+      - name: total_spent
+        tests: [not_null]
