@@ -70,3 +70,13 @@ models:
           - not_null
           - relationships:
               arguments: {to: ref('dim_product'), field: product_id}
+
+  - name: mart_revenue_growth
+    description: "E3 - Total revenue per month and month-over-month growth using LAG(). The first month has NULL growth."
+    columns:
+      - name: ym
+        tests: [unique, not_null]
+      - name: revenue
+        tests: [not_null]
+      - name: growth_pct
+        description: "(revenue - previous month) / previous month * 100, rounded to 2 decimals"
