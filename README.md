@@ -148,6 +148,26 @@ of the automated pipeline:
 
 Run `make transform test`, then trigger the DAG. Submit the link to your repository.
 
+### Part E — Solution (Rafi Busthami)
+
+| # | What | Where |
+|---|---|---|
+| 1 | Sales per region per month (`fact_sales` ⨝ `dim_customer` ⨝ `dim_date`) | `dbt/models/marts/mart_sales_region_month.sql` |
+| 2 | Top 5 products per category — `ROW_NUMBER()` + `QUALIFY`, plus each product's share of its category | `dbt/models/marts/mart_top5_products_per_category.sql` |
+| 3 | Month-over-month revenue growth with `LAG()` (first month = `NULL`, `NULLIF` avoids divide-by-zero) | `dbt/models/marts/mart_revenue_growth.sql` |
+| 4 | Customers ranked by total spending (`RANK()`; filter `spending_rank <= N` for a top-N list) | `dbt/models/marts/mart_top_customers.sql` |
+| 5 | New tests: `accepted_values` on `dim_product.category` and `dim_customer.region`, key tests on every new mart, plus two singular tests: one row per month/region, and the marts must reconcile with `fact_sales` revenue | `dbt/models/marts/schema.yml`, `dbt/tests/` |
+| 6 | New DAG task `export_monthly_revenue` after `report`: writes `dw.mart_monthly_revenue` to `data/export/monthly_revenue.csv` (atomic write, row count returned as XCom) | `dags/retail_pipeline.py` |
+
+Results on the lab data:
+
+- `make transform test` → 12 models OK; **40 tests: 39 PASS, 1 WARN** (the expected unreadable-date warning), 0 errors.
+- DAG run → all **6 tasks green**: `check_source_files → extract_load → dbt_run → dbt_test → report → export_monthly_revenue`.
+- `make break` → `dbt_test` fails on 2 tests (orphan customer + mart reconciliation), so `report` and `export_monthly_revenue` are **upstream_failed** and no CSV is written from bad data.
+- Every mart was cross-checked against an independent pandas calculation from the raw CSVs: all match.
+
+`data/export/` is generated output, so it is in `.gitignore` and cleaned by `make reset`.
+
 ---
 
 ## Folder map
