@@ -6,11 +6,22 @@ models:
     columns:
       - name: customer_id
         tests: [unique, not_null]
+      - name: region
+        tests:
+          - accepted_values:          # Part E5: catches a region that was not cleaned to Title Case
+              arguments:
+                values: ['Jawa', 'Kalimantan', 'Papua', 'Sulawesi', 'Sumatera']
 
   - name: dim_product
     columns:
       - name: product_id
         tests: [unique, not_null]
+      - name: category
+        tests:
+          - not_null
+          - accepted_values:          # Part E5: only the three known categories are allowed
+              arguments:
+                values: ['Accessories', 'Electronics', 'Furniture']
 
   - name: dim_date
     columns:
