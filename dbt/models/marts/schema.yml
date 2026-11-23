@@ -50,3 +50,23 @@ models:
         tests: [not_null]
       - name: revenue
         tests: [not_null]
+
+  - name: mart_top5_products_per_category
+    description: "E2 - Top 5 products by revenue in each category, ranked with ROW_NUMBER() and filtered with QUALIFY."
+    columns:
+      - name: category
+        tests: [not_null]
+      - name: rank_in_category
+        description: "1 = best-selling product in its category"
+        tests:
+          - not_null
+          - accepted_values:          # QUALIFY must keep ranks 1-5 only
+              arguments:
+                values: [1, 2, 3, 4, 5]
+                quote: false
+      - name: product_id
+        tests:
+          - unique                    # a product belongs to one category, so it appears once
+          - not_null
+          - relationships:
+              arguments: {to: ref('dim_product'), field: product_id}
