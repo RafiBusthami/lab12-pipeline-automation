@@ -10,7 +10,7 @@ export AIRFLOW__CORE__SIMPLE_AUTH_MANAGER_ALL_ADMINS ?= True
 PYTHON ?= $(shell test -x $(HOME)/.venvs/airflow/bin/python && echo $(HOME)/.venvs/airflow/bin/python || echo python3)
 DBT = cd dbt && dbt
 
-.PHONY: help el transform test pipeline tables airflow run-dag docs new-day break fix reset
+.PHONY: help el transform test pipeline tables sql airflow run-dag docs new-day break fix reset
 
 help:          ## show this list
 	@grep -E '^[a-z-]+:.*##' Makefile | awk -F':.*## ' '{printf "  make %-10s %s\n", $$1, $$2}'
@@ -29,6 +29,9 @@ pipeline: el transform test   ## the whole pipeline, by hand
 
 tables:        ## list the tables in the warehouse
 	$(PYTHON) scripts/query.py
+
+sql:           ## run your own query:  make sql Q="SELECT * FROM dw.fact_sales LIMIT 5"
+	$(PYTHON) scripts/query.py "$(Q)"
 
 # ---- Part C: let Airflow do it -----------------------------------------
 airflow:       ## start Airflow (UI on port 8080). Stop with Ctrl+C

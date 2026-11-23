@@ -1,8 +1,8 @@
 """
 Look inside the warehouse.
 
-  python scripts/query.py                       -> list all tables
-  python scripts/query.py "SELECT * FROM dw.fact_sales LIMIT 5"
+  make tables                                   -> list all tables
+  make sql Q="SELECT * FROM dw.fact_sales LIMIT 5"
 """
 import os
 import sys
@@ -13,7 +13,7 @@ import duckdb
 LAB_HOME = Path(os.environ.get("LAB_HOME", Path(__file__).resolve().parents[1]))
 DB_PATH = os.environ.get("DUCKDB_PATH", str(LAB_HOME / "warehouse" / "retail.duckdb"))
 
-sql = sys.argv[1] if len(sys.argv) > 1 else """
+sql = sys.argv[1] if len(sys.argv) > 1 and sys.argv[1].strip() else """
     SELECT table_schema, table_name, table_type
     FROM information_schema.tables
     ORDER BY 1, 2

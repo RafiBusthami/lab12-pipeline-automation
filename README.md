@@ -69,7 +69,8 @@ Questions:
    job as each pandas line from Practice 10 (`to_datetime`, `fillna(0)`,
    `drop_duplicates`, negative quantity).
 2. `raw.sales` has 244 rows but `dw.fact_sales` has 241. Where did 3 rows go?
-   Use `python scripts/query.py "SELECT ..."` — or `make tables` — to prove it.
+   Use `make sql Q="SELECT ..."` to prove it, for example
+   `make sql Q="SELECT count(*) FROM staging.stg_sales"`.
 3. `make test` shows **1 warning**. Which test? Why is it a *warning* and not an *error*?
    (Look at `dbt/models/staging/schema.yml`.)
 4. Open `dbt/models/marts/fact_sales.sql`. It never says *which* table to build first.
@@ -188,7 +189,7 @@ warehouse/          retail.duckdb (created when you run the pipeline)
 | Problem | Fix |
 |---|---|
 | `airflow: command not found` | Setup still running, or open a **new** terminal |
-| `Could not set lock on file ... retail.duckdb` | Another program has the database open for writing. Close it; use `query.py` (read-only) to look |
+| `Could not set lock on file ... retail.duckdb` | Another program has the database open for writing. Close it; use `make sql` (read-only) to look |
 | DAG not in the UI | Wait 10 seconds; check for Python errors: `airflow dags list-import-errors` |
 | Port 8080 shows nothing | Is `make airflow` still running? Look for errors in that terminal |
 | Start again from zero | `make reset` |
