@@ -3,12 +3,13 @@ Lab 12 - Data Pipeline Automation
 =================================
 The Practice 10 script, split into tasks and run by Airflow on a schedule.
 
-    check_source_files >> extract_load >> dbt_run >> dbt_test >> report
+    check_source_files >> extract_load >> dbt_run >> dbt_test >> report >> export_monthly_revenue
 
   E + L : scripts/extract_load.py   (CSV  -> DuckDB raw.*)
   T     : dbt run                   (raw  -> staging.* -> dw.* star schema)
   QC    : dbt test                  (replaces the hand-written qc = {...} checks)
   Report: print the monthly revenue table into the task log
+  Export: write dw.mart_monthly_revenue to data/export/monthly_revenue.csv   (Part E6)
 """
 from __future__ import annotations
 
@@ -25,6 +26,7 @@ LAB_HOME = Path(os.environ.get("LAB_HOME", Path(__file__).resolve().parents[1]))
 RAW_DIR = LAB_HOME / "data" / "raw"
 DBT_DIR = LAB_HOME / "dbt"
 DB_PATH = LAB_HOME / "warehouse" / "retail.duckdb"
+EXPORT_CSV = LAB_HOME / "data" / "export" / "monthly_revenue.csv"
 
 sys.path.insert(0, str(LAB_HOME / "scripts"))  # so we can import extract_load.py
 
@@ -96,8 +98,32 @@ def retail_pipeline():
         finally:
             con.close()
 
+    @task
+    def export_monthly_revenue() -> dict[str, str | int]:
+        """Part E6: save the monthly revenue mart as a CSV file for people without database access."""
+        import duckdb
+
+        EXPORT_CSV.parent.mkdir(parents=True, exist_ok=True)
+        tmp_csv = EXPORT_CSV.with_suffix(".csv.tmp")   # write to a temp file first ...
+
+        con = duckdb.connect(str(DB_PATH), read_only=True)
+        try:
+            rows = con.execute("SELECT COUNT(*) FROM dw.mart_monthly_revenue").fetchone()[0]
+            con.execute(f"""
+                COPY (
+                    SELECT * FROM dw.mart_monthly_revenue
+                    ORDER BY ym, revenue DESC, product_name
+                ) TO '{tmp_csv.as_posix()}' (HEADER, DELIMITER ',')
+            """)
+        finally:
+            con.close()
+
+        tmp_csv.replace(EXPORT_CSV)                    # ... then swap it in, so readers never see half a file
+        print(f"Exported {rows} rows to {EXPORT_CSV}")
+        return {"path": str(EXPORT_CSV), "rows": rows}  # -> XCom
+
     loaded = extract_load(check_source_files())
-    loaded >> dbt_run >> dbt_test >> report()
+    loaded >> dbt_run >> dbt_test >> report() >> export_monthly_revenue()
 
 
 retail_pipeline()

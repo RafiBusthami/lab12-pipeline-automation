@@ -52,4 +52,4 @@ fix:           ## remove the bad file
 
 reset:         ## back to the starting point
 	rm -f data/raw/sales_2024_07.csv data/raw/sales_2024_08_orphan.csv
-	rm -rf warehouse dbt/target
+	rm -rf warehouse dbt/target data/export
